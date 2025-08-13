@@ -21,25 +21,28 @@ stages:
     - checkout: self
       clean: true
 
-    - script: |
-        set -e
-        python3 -m venv .venv
-        .venv/bin/python -m pip install --upgrade pip
-        .venv/bin/pip install -r requirements.txt
-        .venv/bin/pytest -q
-      displayName: Install deps in venv & run tests
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.11'
 
     - script: |
-        set -e
-        .venv/bin/pip install flake8 bandit
-        .venv/bin/flake8 app --max-line-length=100
-        .venv/bin/bandit -r app -q
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pytest -q
+      displayName: Install & Test
+
+    # (Optionnel) Lint & sécurité
+    - script: |
+        pip install flake8 bandit
+        flake8 app --max-line-length=100
+        bandit -r app -q
       displayName: Lint & Security Scan
 
     - script: |
         docker build -t $(imageName):$(tag) .
       displayName: Docker build
 
+    # (Optionnel) tag "latest" local
     - script: |
         docker tag $(imageName):$(tag) $(imageName):latest
       displayName: Tag latest
