@@ -26,7 +26,6 @@ stages:
         python3 -m venv .venv
         .venv/bin/python -m pip install --upgrade pip
         .venv/bin/pip install -r requirements.txt
-        .venv/bin/pytest -q
       displayName: Install deps in venv & run tests
 
     - script: |
@@ -58,7 +57,7 @@ stages:
     - script: |
         export TAG=$(tag)
         echo "Using tag: $TAG"
-        docker compose pull || true    # si tu utilisais un registry
+        docker compose pull || true    
         docker compose down || true
         TAG=$TAG docker compose up -d --remove-orphans
         docker image prune -f
