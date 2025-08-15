@@ -22,4 +22,5 @@ sudo apt install python3.12-venv -y
 
 sudo usermod -aG docker azureuser
 
+#https://github.com/pluralsight-cloud/azure-az-400-devops-engineer-build-release-pipelines.git
 
