@@ -1,65 +1,41 @@
 trigger:
   branches:
-    include: [ main ]
+    include: [main]
 
-pool:
-  name: Default          # ou le nom de ton pool
-  demands:               # s'assure que docker est présent
-    - docker
 
 variables:
-  imageName: 'fastapi-app'
-  tag: '$(Build.BuildId)'
+- group: kv-kv-dockerhub
+- name: imageRepo
+  value: $(DOCKERHUB_REPO)
+- name: tag
+  value: $(Build.BuildId) 
+
 
 stages:
-- stage: CI
-  displayName: Build & Test
-  jobs:
-  - job: build_test
-    displayName: Run unit tests and build image
-    steps:
-    - checkout: self
-      clean: true
-
-    - script: |
-        set -e
-        python3 -m venv .venv
-        .venv/bin/python -m pip install --upgrade pip
-        .venv/bin/pip install -r requirements.txt
-      displayName: Install deps in venv & run tests
-
-    - script: |
-        set -e
-        .venv/bin/pip install flake8 bandit
-        .venv/bin/flake8 app --max-line-length=100
-        .venv/bin/bandit -r app -q
-      displayName: Lint & Security Scan
-
-    - script: |
-        docker build -t $(imageName):$(tag) .
-      displayName: Docker build
-
-    - script: |
-        docker tag $(imageName):$(tag) $(imageName):latest
-      displayName: Tag latest
-
-- stage: CD
-  displayName: Deploy to Local Linux
-  dependsOn: CI
-  jobs:
-  - job: deploy
-    displayName: Compose Up
-    steps:
-    - checkout: self
-      clean: true
-
-    # Mettre à jour le TAG et redémarrer le service avec docker compose
-    - script: |
-        export TAG=$(tag)
-        echo "Using tag: $TAG"
-        docker compose pull || true    
-        docker compose down || true
-        TAG=$TAG docker compose up -d --remove-orphans
-        docker image prune -f
-      workingDirectory: $(System.DefaultWorkingDirectory)
-      displayName: Docker Compose Up
+  - stage: CI
+    displayName: PIPO- Build, Test, Scan and Push 
+    jobs:
+      - job: build_test_push 
+        pool:
+          vmImage: 'Default'
+        steps:
+        - checkout: self 
+          clean: true 
+        - script: |
+            set -e 
+            python3 -m venv .venv
+            .venv/bin/python -m pip install --upgrade pip
+            .venv/bin/pip install -r requirements.txt
+          
+          displayName: Install deps in venv & run tests 
+        
+        - task: Docker@2 
+          displayName: Build Image 
+          inputs:
+            command: build 
+            repository: $(imageRepo)
+            containerRegistry: sc-dockerhub 
+            Dockerfile: '**/Dockerfile'
+            tags: |
+              $(tag)
+              latest

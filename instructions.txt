@@ -1,0 +1,18 @@
+docker login myregistry.azurecr.io
+
+az login
+az account set --subscription "<SUBSCRIPTION_ID_OR_NAME>"
+
+az group create -n rg-sec -l canadacentral
+
+# Create Key Vault
+az keyvault create -n kv-devops-secrets -g rg-sec -l canadacentral
+
+# Store Docker Hub secrets
+az keyvault secret set -n DOCKERHUB_USERNAME --vault-name kv-devops-secrets --value "your-bot-username"
+az keyvault secret set -n DOCKERHUB_TOKEN    --vault-name kv-devops-secrets --value "your-long-access-token"
+
+# (Optional) store repo name if org != username
+az keyvault secret set -n DOCKERHUB_REPO --vault-name kv-devops-secrets --value "yourorg/fastapi-app"
+
+
