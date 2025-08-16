@@ -16,3 +16,15 @@ az keyvault secret set -n DOCKERHUB_TOKEN    --vault-name kv-devops-secrets --va
 az keyvault secret set -n DOCKERHUB_REPO --vault-name kv-devops-secrets --value "yourorg/fastapi-app"
 
 
+========================================
+
+Setup agent pool 
+
+mkdir myagent && cd myagent 
+
+wget https://download.agent.dev.azure.com/agent/4.259.0/vsts-agent-linux-x64-4.259.0.tar.gz
+
+tar zxvf vsts-agent-linux-x64-4.259.0.tar.gz 
+
+./config.sh 
+

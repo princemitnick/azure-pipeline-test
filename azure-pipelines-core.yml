@@ -4,7 +4,7 @@ trigger:
 
 
 variables:
-- group: kv-kv-dockerhub
+- group: kv-dockerhub
 - name: imageRepo
   value: $(DOCKERHUB_REPO)
 - name: tag
@@ -17,7 +17,9 @@ stages:
     jobs:
       - job: build_test_push 
         pool:
-          vmImage: 'Default'
+          name: Default
+          demands:
+            - docker
         steps:
         - checkout: self 
           clean: true 
@@ -29,12 +31,12 @@ stages:
           
           displayName: Install deps in venv & run tests 
         
-        - task: Docker@2 
-          displayName: Build Image 
+        - task: Docker@2
+          displayName: Build & Push to Docker Hub
           inputs:
-            command: build 
-            repository: $(imageRepo)
-            containerRegistry: sc-dockerhub 
+            command: buildAndPush
+            containerRegistry: 'dockerhubconnection'           
+            repository: '$(imageRepo)'                   
             Dockerfile: '**/Dockerfile'
             tags: |
               $(tag)
