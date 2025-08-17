@@ -50,4 +50,40 @@ stages:
             /usr/local/bin/trivy image --severity HIGH,CRITICAL --no-progress --exit-code 0 docker.io/$(imageRepo):$(tag)
             displayName: Trivy scan (warn only)
         
-        
+
+  - stage: CD
+    displayName : Deploy to prod-linux
+    dependsOn: CI
+    jobs:
+    - deployment: Deploy FastAzurePipeline
+      displayName: Pull & Compose up on Environment VM
+      environment:
+        name: prod
+        resourceType: VirtualMachine
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - task: Docker@2
+              displayName: Docker Hub login
+              inputs:
+                command: login
+                containerRegistry: 'servicedockerhubconnection'
+            
+            - script: |
+                set -e
+                export DOCKERHUB_REPO="princemitnick/fast-azure-pipeline"
+                export TAG="$(Build.BuildId)"
+                echo "Deploying image: docker.io/${DOCKERHUB_REPO}:${TAG}"
+
+                TAG="$TAG" DOCKERHUB_REPO="$DOCKERHUB_REPO" \
+                  docker compose -f /opt/fastapi/docker-compose.yml pull
+                
+                TAG="$TAG" DOCKERHUB_REPO="$DOCKERHUB_REPO" \
+                  docker compose -f /opt/fastapi/docker-compose.yml up -d --remove-orphans
+                
+                docker image prune -f
+              displayName: Pull & Compose Up
+              
+                
+      

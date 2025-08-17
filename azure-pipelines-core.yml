@@ -30,14 +30,64 @@ stages:
             .venv/bin/pip install -r requirements.txt
           
           displayName: Install deps in venv & run tests 
-        
+
         - task: Docker@2
-          displayName: Build & Push to Docker Hub
+          displayName: Build Docker Image
           inputs:
-            command: buildAndPush
-            containerRegistry: 'dockerhubconnection'           
-            repository: '$(imageRepo)'                   
+            command: build
+            repository: $(imageRepo)
             Dockerfile: '**/Dockerfile'
             tags: |
               $(tag)
               latest
+
+        - script: |
+            set -e
+            trivy image --severity HIGH,CRITICAL --no-progress --exit-code 0 princemitnick/fast-azure-pipeline:1
+          
+          displayName: Scan Image with Trivy
+        
+        - task: Docker@2
+          displayName: Push Image to Docker Hub
+          inputs:
+            command: push
+            containerRegistry: 'servicedockerhubconnection'           
+            repository: '$(imageRepo)'                   
+            tags: |
+              $(tag)
+              latest
+
+  - stage: CD
+    displayName: Deploy to prod-linux
+    dependsOn: CI
+    jobs:
+    - deployment: DeployFastAPI
+      displayName: Pull & Compose Up on Environment VM
+      environment:
+        name: prod                
+        resourceType: VirtualMachine
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - task: Docker@2
+              displayName: Docker Hub login
+              inputs:
+                command: login
+                containerRegistry: 'servicedockerhubconnection'   
+
+            - script: |
+                set -e
+                export DOCKERHUB_REPO="$(DOCKERHUB_REPO)"  
+                export TAG="$(Build.BuildId)"
+                echo "Deploying image: docker.io/${DOCKERHUB_REPO}:${TAG}"
+
+                # Pull latest image for this build
+                TAG="$TAG" DOCKERHUB_REPO="$DOCKERHUB_REPO" \
+                  docker compose -f /opt/fastapi/docker-compose.yml pull
+
+                TAG="$TAG" DOCKERHUB_REPO="$DOCKERHUB_REPO" \
+                  docker compose -f /opt/fastapi/docker-compose.yml up -d --remove-orphans
+
+                docker image prune -f
+              displayName: Pull & Compose Up
