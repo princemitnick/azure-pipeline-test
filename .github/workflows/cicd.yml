@@ -40,6 +40,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Push tags to Docker Hub
+        run: |
+          set -e
+          docker push $IMAGE_REPO:${IMAGE_TAG}
+          docker push $IMAGE_REPO:latest
 
   deploy_vm:
     name: Deploy on VM
