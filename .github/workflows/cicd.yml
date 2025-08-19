@@ -65,7 +65,7 @@ jobs:
 
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             export DOCKERHUB_REPO="${{ secrets.DOCKERHUB_REPO }}"
-            export TAG="${{ needs.build_scan_push.outputs.image_tag }}"
+            export TAG="latest"
 
             echo "${TAG}" >> ~/sessions.txt
             echo "${DOCKERHUB_REPO}" >> ~/sessions.txt
