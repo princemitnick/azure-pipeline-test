@@ -1,0 +1,38 @@
+name: CI-CD Fast (DockerHub + VM)
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+env:
+  IMAGE_REPO: ${{ secrets.DOCKERHUB_REPO }}
+  IMAGE_TAG: ${{ github.run_number }}
+
+jobs:
+  build_scan_push:
+    name: Build -> Scan -> Push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build (load to local docker)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          load: true
+          tags: |
+            ${{ env.IMAGE_REPO }}:${{ env.IMAGE_TAG }}
+            ${{ env.IMAGE_REPO }}:latest
+      
+      - name: Docker Hub login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
