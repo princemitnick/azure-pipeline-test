@@ -54,11 +54,15 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            echo "in" >> ~/session.txt
+            echo "in" >> ~/sessions.txt
+            echo "${{ needs.build_scan_push.outputs.image_tag }}" >> ~/session.txt
 
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             export DOCKERHUB_REPO="${{ secrets.DOCKERHUB_REPO }}"
             export TAG="${{ needs.build_scan_push.outputs.image_tag }}"
+
+            echo "${TAG}" >> ~/sessions.txt
+            echo "${DOCKERHUB_REPO}" >> ~/sessions.txt
 
             echo "Deploying docker.io/${DOCKERHUB_REPO}:${TAG}"
 
