@@ -37,24 +37,24 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-deploy_vm:
-  name: Deploy on VM
-  needs: build_scan_push
-  runs-on: ubuntu-latest
+  deploy_vm:
+    name: Deploy on VM
+    needs: build_scan_push
+    runs-on: ubuntu-latest
 
-  steps:
-    - name: SSH deploy (Pull + Up)
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_KEY }}
-        script: |
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-          export DOCKERHUB_REPO="${{ secrets.DOCKERHUB_REPO }}"
-          export TAG="${{ needs.build_scan_push.outputs.image_tag || env.IMAGE_TAG }}"
-          TAG="$TAG" DOCKERHUB_REPO="$DOCKERHUB_REPO" \
-            docker compose -f /opt/fastapi/docker-compose.yml pull
-          TAG="$TAG" DOCKERHUB_REPO="$DOCKERHUB_REPO" \
-            docker compose -f /opt/fastapi/docker-compose.yml up -d --remove-orphans
-          docker image prune -f
+    steps:
+      - name: SSH deploy (Pull + Up)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+            export DOCKERHUB_REPO="${{ secrets.DOCKERHUB_REPO }}"
+            export TAG="${{ needs.build_scan_push.outputs.image_tag || env.IMAGE_TAG }}"
+            TAG="$TAG" DOCKERHUB_REPO="$DOCKERHUB_REPO" \
+              docker compose -f /opt/fastapi/docker-compose.yml pull
+            TAG="$TAG" DOCKERHUB_REPO="$DOCKERHUB_REPO" \
+              docker compose -f /opt/fastapi/docker-compose.yml up -d --remove-orphans
+            docker image prune -f
