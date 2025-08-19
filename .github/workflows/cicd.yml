@@ -73,7 +73,7 @@ jobs:
             echo "Deploying docker.io/${DOCKERHUB_REPO}:${TAG}"
 
             # Pull explicitly (you’ll see a clear error if the tag doesn’t exist)
-            docker pull docker.io/${DOCKERHUB_REPO}:${TAG}
+            docker pull docker.io/${DOCKERHUB_REPO}:latest
 
             # Compose uses env substitution for ${DOCKERHUB_REPO} and ${TAG}
             DOCKERHUB_REPO="$DOCKERHUB_REPO" TAG="$TAG" \
