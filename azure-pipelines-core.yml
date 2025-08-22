@@ -23,6 +23,9 @@ stages:
         steps:
         - checkout: self 
           clean: true 
+
+        - script: |
+            echo "$(Build.BuildId) - Testing..."
         - script: |
             set -e 
             python3 -m venv .venv
