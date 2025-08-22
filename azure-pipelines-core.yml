@@ -17,7 +17,7 @@ stages:
     jobs:
       - job: build_test_push 
         pool:
-          name: Default
+          name: pipo-pool
           demands:
             - docker
         steps:
