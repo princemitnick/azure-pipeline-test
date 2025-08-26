@@ -1,0 +1,30 @@
+name: 1.0$(Rev:.r)
+
+trigger:
+  - main
+
+variables:
+  name: Prince
+  daughter: Sara
+
+pool:
+  name: default
+
+jobs:
+  - job: helloworld
+    pool:
+     name: default
+     demands:
+       - Agent.Name -equals linuxvm
+    steps:
+      - checkout: self
+      - script: echo "Hello $(name)"
+
+  - job: Greetdaughter
+    pool:
+     name: default
+     demands:
+     - Agent.Name -equals linuxvm-2
+    steps:
+      - checkout: self 
+      - script: echo "Hello $(daughter)"
