@@ -50,8 +50,14 @@ stages:
             $(tag)
             latest
 
-      - publish: $(Build.ArtifactStagingDirectory)
-        artifact: metadata
       - script: |
-          echo "$(tag)" > $(Build.ArtifactStagingDirectory)/image_tag.txt
-        displayName: "Write image tag artifact"
+          set -e
+          echo "$(Build.BuildId)" > $(Build.ArtifactStagingDirectory)/image_tag.txt
+        displayName: "Write image tag"
+
+      - task: PublishPipelineArtifact@1
+        displayName: "Publish image tag"
+        inputs:
+          targetPath: '$(Build.ArtifactStagingDirectory)'
+          artifact: 'metadata'
+          publishLocation: 'pipeline'
