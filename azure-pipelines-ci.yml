@@ -1,6 +1,6 @@
 trigger:
   branches: [ main ]
-
+  
 variables:
 - group: kv-dockerhub
 - name: imageRepo
