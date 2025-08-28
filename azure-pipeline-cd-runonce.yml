@@ -1,0 +1,50 @@
+resources:
+  pipelines:
+  - pipeline: ci_run
+    source: 'FastAPI-CI'        
+    trigger: true               
+
+variables:
+- group: kv-dockerhub
+
+stages:
+- stage: CD
+  displayName: Deploy to prod
+  jobs:
+  - deployment: DeployFastAPI
+    displayName: Pull & Compose Up on Environment VM
+    environment:
+      name: prod
+      resourceType: VirtualMachine
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: ci_run
+            artifact: metadata
+
+          - bash: |
+              set -e
+              TAG="$(cat $(Pipeline.Workspace)/ci_run/metadata/image_tag.txt)"
+              echo "TAG read from artifact: $TAG"
+              echo "##vso[task.setvariable variable=IMAGE_TAG;isOutput=true]$TAG"
+            name: readTag
+            displayName: "Read image tag"
+
+          - task: Docker@2
+            displayName: Docker Hub login
+            inputs:
+              command: login
+              containerRegistry: 'servicedockerhubconnection'
+
+          - bash: |
+              set -e
+              export DOCKERHUB_REPO="$(DOCKERHUB_REPO)"
+              export TAG="$(readTag.IMAGE_TAG)"
+              echo "Deploying docker.io/${DOCKERHUB_REPO}:${TAG}"
+              DOCKERHUB_REPO="$DOCKERHUB_REPO" TAG="$TAG" \
+                docker compose -f /opt/fastapi/docker-compose.yml pull
+              DOCKERHUB_REPO="$DOCKERHUB_REPO" TAG="$TAG" \
+                docker compose -f /opt/fastapi/docker-compose.yml up -d --remove-orphans
+              docker image prune -f
+            displayName: Pull & Compose Up
