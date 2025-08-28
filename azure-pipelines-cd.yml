@@ -1,7 +1,7 @@
 resources:
   pipelines:
-  - pipeline: ci_run
-    source: 'FastAPI-CI'        
+  - pipeline: pipo-ci
+    source: 'pipo-ci'        
     trigger: true               
 
 variables:
