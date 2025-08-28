@@ -1,8 +1,8 @@
 resources:
   pipelines:
   - pipeline: ci_run
-    source: 'pipo-ci'        
-    trigger: true               
+    source: 'pipo-ci'        # nom du pipeline CI
+    trigger: true
 
 variables:
 - group: kv-dockerhub
@@ -10,14 +10,14 @@ variables:
 stages:
 - stage: CD_Canary
   displayName: Canary then Full rollout
-  dependsOn: CI
   jobs:
+
   - deployment: Deploy_Canary
-    displayName: Canary deploy (tag=canary)
+    displayName: Canary deploy (tags=canary)
     environment:
       name: prod
       resourceType: VirtualMachine
-      tags: ['canary']          
+      tags: ['canary']
     strategy:
       runOnce:
         deploy:
@@ -28,27 +28,25 @@ stages:
               command: login
               containerRegistry: 'servicedockerhubconnection'
 
-          - script: |
+          - bash: |
               set -e
               export DOCKERHUB_REPO="$(DOCKERHUB_REPO)"
-              export TAG="$(Build.BuildId)"
+              export TAG="$(resources.pipeline.ci_run.runID)"   # <-- tag du run CI
               echo "CANARY → docker.io/${DOCKERHUB_REPO}:${TAG}"
-              DOCKERHUB_REPO="$DOCKERHUB_REPO" TAG="$TAG" \
-                docker compose -f /opt/fastapi/docker-compose.yml pull
-              DOCKERHUB_REPO="$DOCKERHUB_REPO" TAG="$TAG" \
-                docker compose -f /opt/fastapi/docker-compose.yml up -d --remove-orphans
+              DOCKERHUB_REPO="$DOCKERHUB_REPO" TAG="$TAG" docker compose -f /opt/fastapi/docker-compose.yml pull
+              DOCKERHUB_REPO="$DOCKERHUB_REPO" TAG="$TAG" docker compose -f /opt/fastapi/docker-compose.yml up -d --remove-orphans
             displayName: Pull & Up (canary)
 
-          - script: |
+          - bash: |
               set -e
               echo "Smoke test on canary node"
               curl -fsS http://localhost:8000/health | grep -q '"status":"ok"'
             displayName: Smoke test (canary)
-      
+
   - deployment: Deploy_Stable
     displayName: Rollout to stable (tags=stable)
     dependsOn: Deploy_Canary
-    condition: succeeded()             # ne déploie sur stable que si canary est OK
+    condition: succeeded()
     environment:
       name: prod
       resourceType: VirtualMachine
@@ -63,14 +61,12 @@ stages:
               command: login
               containerRegistry: 'servicedockerhubconnection'
 
-          - script: |
+          - bash: |
               set -e
               export DOCKERHUB_REPO="$(DOCKERHUB_REPO)"
-              export TAG="$(Build.BuildId)"
+              export TAG="$(resources.pipeline.ci_run.runID)"   # <-- même tag
               echo "STABLE → docker.io/${DOCKERHUB_REPO}:${TAG}"
-              DOCKERHUB_REPO="$DOCKERHUB_REPO" TAG="$TAG" \
-                docker compose -f /opt/fastapi/docker-compose.yml pull
-              DOCKERHUB_REPO="$DOCKERHUB_REPO" TAG="$TAG" \
-                docker compose -f /opt/fastapi/docker-compose.yml up -d --remove-orphans
+              DOCKERHUB_REPO="$DOCKERHUB_REPO" TAG="$TAG" docker compose -f /opt/fastapi/docker-compose.yml pull
+              DOCKERHUB_REPO="$DOCKERHUB_REPO" TAG="$TAG" docker compose -f /opt/fastapi/docker-compose.yml up -d --remove-orphans
               docker image prune -f
             displayName: Pull & Up (stable)
