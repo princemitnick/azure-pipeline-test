@@ -1,6 +1,6 @@
 resources:
   pipelines:
-  - pipeline: pipo-ci
+  - pipeline: ci_run
     source: 'pipo-ci'        
     trigger: true               
 
