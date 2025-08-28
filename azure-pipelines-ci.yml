@@ -1,0 +1,56 @@
+trigger:
+  branches: [ main ]
+
+variables:
+- group: kv-dockerhub
+- name: imageRepo
+  value: $(DOCKERHUB_REPO)
+- name: tag
+  value: $(Build.BuildId)
+
+
+pool:
+  name: pipo
+  demands:
+    - docker
+
+stages:
+  - stage: CI
+    jobs:
+    - job: build_scan_push
+      steps:
+      - checkout: self
+        clean: true
+      
+      - script: | 
+          set -e
+          python3 -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
+        displayName: Install deps (venv)
+      
+      - task: Docker@2
+        displayName: Build image
+        inputs:
+          command: build
+          repository: $(imageRepo)
+          Dockerfile: '**/Dockerfile'
+          tags: |
+            $(tag)
+            latest
+
+      - task: Docker@2
+        displayName: Push image
+        inputs:
+          command: push
+          containerRegistry: 'servicedockerhubconnection'
+          repository: $(imageRepo)
+          tags: |
+            $(tag)
+            latest
+
+      - publish: $(Build.ArtifactStagingDirectory)
+        artifact: metadata
+      - script: |
+          echo "$(tag)" > $(Build.ArtifactStagingDirectory)/image_tag.txt
+        displayName: "Write image tag artifact"
