@@ -1,5 +1,6 @@
 trigger:
-  branches: [ main ]
+  branches:
+    include: [main]
   
 variables:
 - group: kv-dockerhub
