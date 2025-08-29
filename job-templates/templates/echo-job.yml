@@ -1,0 +1,11 @@
+parameters:
+  jobName: ''
+  message: ''
+
+jobs:
+- job: ${{ parameters.jobName }}
+  pool: 
+    name: default
+  steps:
+  - script: echo "Hello from ${{ parameters.jobName}} - ${{ parameters.message }}"
+    displayName: "Echo message"

@@ -1,0 +1,20 @@
+trigger:
+  branches:
+    include: [main]
+
+stages:
+- stage: Stage1
+  displayName: "First Stage"
+  jobs:
+  - template: templates/echo-job.yml
+    parameters:
+      jobName: "Job1"
+      message: "This is the first job"
+
+- stage: Stage2
+  displayName: "Second Stage"
+  jobs:
+  - template: templates/echo-job.yml
+    parameters:
+      jobName: "Job2"
+      message: "This is the second job"
