@@ -1,0 +1,6 @@
+# File: steps/build.yml
+
+steps:
+
+- script: npm install
+- script: npm test

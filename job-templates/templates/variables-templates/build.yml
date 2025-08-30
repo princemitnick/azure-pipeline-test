@@ -1,0 +1,10 @@
+variables:
+
+- name: vmImage
+  value: windows-latest
+
+- name: arch
+  value: x64
+
+- name: config
+  value: debug

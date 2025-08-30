@@ -1,0 +1,25 @@
+jobs:
+
+- job: macOS
+  pool:
+    vmImage: 'macOS-latest'
+  steps:
+
+  - template: steps/build.yml # Template reference
+
+
+- job: Linux
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+
+  - template: steps/build.yml # Template reference
+
+
+- job: Windows
+  pool:
+    vmImage: 'windows-latest'
+  steps:
+
+  - template: steps/build.yml # Template reference
+  - script: sign              # Extra step on Windows only
